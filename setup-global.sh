@@ -67,8 +67,8 @@ elif [[ -z "${1:-}" ]]; then
     # Interactive mode - ask user
     echo "Where would you like to install the skills?"
     echo ""
-    echo "  1) Agents directory ($HOME/.agents/skills) ${DIM}- Used by: Mistral Vibe${RESET}"
-    echo "  2) Claude directory ($HOME/.claude/code/skills) ${DIM}- Used by: Claude Code${RESET}"
+    echo -e "  1) Agents directory ($HOME/.agents/skills) ${DIM}- Used by: Mistral Vibe${RESET}"
+    echo -e "  2) Claude directory ($HOME/.claude/code/skills) ${DIM}- Used by: Claude Code${RESET}"
     echo "  3) Both platforms (default)"
     echo "  4) Custom path"
     echo ""
