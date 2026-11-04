@@ -1,0 +1,26 @@
+# AI Scratchpad files - AI-controlled, do not edit
+*.ai-scratchpad.md
+
+# General
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Node modules (if any)
+node_modules/
+
+# Script output
+*.out
+*.output
