@@ -110,7 +110,7 @@ show_menu() {
         done
         
         echo ""
-        echo -e "${DIM}Use arrow keys to navigate, Enter to select, ESC to default, q to quit${RESET}"
+        echo -e "${DIM}Use arrow keys to navigate, Space to select, ESC to default, q to quit${RESET}"
         
         # Read a single character (no newline)
         if ! IFS= read -rsn1 key; then
