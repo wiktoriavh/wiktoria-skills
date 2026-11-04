@@ -4,12 +4,13 @@ A skill that automatically groups your changes into logical commits following th
 
 ## What It Does
 
-Instead of committing all your changes in one large commit, this skill:
+Instead of committing all your changes in one large commit, this skill automatically:
 
 1. **Analyzes** your staged and unstaged changes
 2. **Groups** them by type (feat, fix, docs, etc.) and scope
 3. **Creates** meaningful commit messages
 4. **Executes** the commits in a logical order
+5. **Provides** a summary of all created commits
 
 ## Usage
 
@@ -23,10 +24,9 @@ Use the conventional-commits skill
 
 The skill will:
 - Detect all your changed files
-- Propose how to group them into commits
-- Show you the proposed commit messages
-- Ask for your approval
-- Execute the commits
+- Automatically group them into logical commits
+- Create the commits without asking for confirmation
+- Display a summary of all created commits
 
 ### With a Message Prefix
 
@@ -99,14 +99,14 @@ All commits follow the Conventional Commits format:
 | `chore` | Build process, dependencies, config files |
 | `revert` | Reverting a previous commit |
 
-## Customization
+## Behavior
 
-When the skill proposes groupings, you can:
+The skill operates automatically without requiring user confirmation:
 
-1. **Accept** - Let it create the commits as proposed
-2. **Adjust** - Merge or split groups, move files between groups
-3. **Rename** - Edit the commit messages
-4. **Review** - See the actual changes in each group before committing
+- All changes (staged + unstaged) are committed
+- Commits are created following the logical grouping rules
+- A summary is displayed after all commits are created
+- If errors occur, execution stops and you're informed
 
 ## Requirements
 
@@ -126,52 +126,44 @@ When the skill proposes groupings, you can:
 1. **Make small, focused changes** - The skill works best when each logical change is in its own set of files
 2. **Use descriptive file names** - Helps the skill understand what the files do
 3. **Write good commit messages in your code** - The skill reads diffs to understand changes
-4. **Review before accepting** - Always check the proposed groupings make sense
 
 ## Example Session
 
 ```
 User: Use the conventional-commits skill
 
-AI: Analyzing your changes...
+AI: Analyzing changes and creating commits...
      
-     I found 5 changed files:
-     - src/api/user.ts (new)
-     - src/api/types.ts (modified)
-     - src/utils/validation.ts (modified)
-     - README.md (modified)
-     - tests/api/user.test.ts (new)
+     Found changes in 5 files:
      
-     I propose the following commits:
+     =========================================
+     Commits created successfully!
+     =========================================
      
-     Commit 1: feat(api): add user management
-     - src/api/user.ts
-     - src/api/types.ts
+     ✓ feat(api): add user management
+       abc1234
+         - src/api/user.ts
+         - src/api/types.ts
      
-     Commit 2: fix(validation): correct email validation regex
-     - src/utils/validation.ts
+     ✓ fix(validation): correct email validation regex
+       def5678
+         - src/utils/validation.ts
      
-     Commit 3: docs: update README with API documentation
-     - README.md
+     ✓ docs: update README with API documentation
+       ghi9012
+         - README.md
      
-     Commit 4: test(api): add user management tests
-     - tests/api/user.test.ts
+     ✓ test(api): add user management tests
+       jkl3456
+         - tests/api/user.test.ts
      
-     Would you like to:
-     1. Accept and commit
-     2. Adjust grouping
-     3. Rename messages
-     4. Show changes
-
-User: Accept and commit
-
-AI: Creating commits...
-     [feat(api): add user management] ✓
-     [fix(validation): correct email validation regex] ✓
-     [docs: update README with API documentation] ✓
-     [test(api): add user management tests] ✓
+     Total commits: 4
      
-     All 4 commits created successfully!
+     Git log:
+     jkl3456 test(api): add user management tests
+     ghi9012 docs: update README with API documentation
+     def5678 fix(validation): correct email validation regex
+     abc1234 feat(api): add user management
 ```
 
 ## Installation

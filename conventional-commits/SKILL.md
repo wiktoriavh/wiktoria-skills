@@ -1,13 +1,13 @@
 ---
 name: conventional-commits
-description: Automatically groups staged or unstaged changes into logical commits following the Conventional Commits standard (https://www.conventionalcommits.org/en/v1.0.0/). Analyzes file changes, categorizes them by type and scope, and creates meaningful commit messages. Ensures changes are split into coherent commits that build on each other rather than one large commit.
+description: Automatically groups staged or unstaged changes into logical commits following the Conventional Commits standard (https://www.conventionalcommits.org/en/v1.0.0/). Analyzes file changes, categorizes them by type and scope, and creates meaningful commit messages. Automatically creates commits without user confirmation and provides a summary of the created commits.
 argument-hint: <optional-message-prefix>
 allowed-tools: Write Read FileSystem Glob Skill Bash
 ---
 
 # conventional-commits — Logical Commit Grouping
 
-You are running the `conventional-commits` skill. This skill helps users create well-structured git commits that follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) specification by automatically grouping changes into logical, coherent commits.
+You are running the `conventional-commits` skill. This skill automatically creates well-structured git commits that follow the [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) specification by automatically grouping changes into logical, coherent commits and executing them without user confirmation.
 
 ## Core Philosophy
 
@@ -55,18 +55,12 @@ Each commit message MUST follow this structure:
 1. **Check current git status**
    - Run `git status` to see current changes
    - Identify staged and unstaged changes
-   - If no changes: inform user "No changes to commit. Please make changes first."
+   - If no changes: inform user "No changes to commit." and exit
 
 2. **Get list of changed files**
    - Use `git diff --name-only` for unstaged changes
    - Use `git diff --cached --name-only` for staged changes
-   - Combine both if user wants to commit all changes
-
-3. **Determine commit scope**
-   - Use `ask_user_question` to ask:
-     - "Should we commit all changes (staged + unstaged)?"
-     - "Or only staged changes?"
-     - "Or would you like to review unstaged changes first?"
+   - Combine both to commit all changes automatically
 
 ### Step 1: Analyze File Changes
 
@@ -101,29 +95,7 @@ For each changed file, extract information to determine grouping:
 
 ### Step 2: Create Proposed Commit Groups
 
-Based on the analysis, create proposed commit groups:
-
-```
-Proposed Commit Groups:
-
-1. feat(api): add user authentication endpoints
-   - src/api/auth.ts (new)
-   - src/api/types.ts (modified)
-   - src/middleware/auth.ts (new)
-
-2. fix(validation): correct email validation regex
-   - src/utils/validation.ts
-
-3. docs(readme): update API documentation
-   - README.md
-
-4. test(auth): add authentication tests
-   - tests/api/auth.test.ts
-
-5. chore(deps): update package.json dependencies
-   - package.json
-   - package-lock.json
-```
+Based on the analysis, create commit groups automatically:
 
 **Grouping Rules:**
 
@@ -141,115 +113,49 @@ Proposed Commit Groups:
    - ❌ `feat & fix` in one commit
    - ✅ Separate `feat` and `fix` commits
 
-### Step 3: Present and Validate with User
+### Step 3: Execute Commits Automatically
 
-Present the proposed grouping to the user:
-
-```
-I've analyzed your changes and propose the following commit groups:
-
-**Group 1: feat(api) - Add user authentication**
-  Files: src/api/auth.ts, src/api/types.ts, src/middleware/auth.ts
-  
-**Group 2: fix(validation) - Correct email validation**
-  Files: src/utils/validation.ts
-  
-**Group 3: docs - Update README with API docs**
-  Files: README.md
-
-Would you like to:
-1. Accept this grouping and proceed with commits
-2. Adjust the grouping (merge/split groups)
-3. Rename any commit messages
-4. See the actual changes in each group
-```
-
-Use `ask_user_question` with options:
-- "Accept and commit"
-- "Adjust grouping"
-- "Rename messages"
-- "Show changes"
-
-### Step 4: Adjust Grouping (if requested)
-
-If user selects "Adjust grouping":
-
-1. Present current grouping as a list
-2. Ask: "Which groups would you like to merge or split?"
-3. Allow user to:
-   - Merge two groups into one
-   - Split a group into multiple groups
-   - Move files between groups
-   - Change commit type or scope
-
-4. Re-display the updated grouping
-5. Return to Step 3 for validation
-
-### Step 5: Rename Messages (if requested)
-
-If user selects "Rename messages":
-
-1. Present each group with its current message
-2. Ask for each group: "What would you like the commit message to be?"
-3. Validate the new message follows Conventional Commits format
-4. If invalid, explain the format and ask again
-
-### Step 6: Show Changes (if requested)
-
-If user selects "Show changes":
-
-1. For each group, run `git diff` for the files in that group
-2. Display the changes in a readable format
-3. Ask if user wants to proceed with commits or make adjustments
-
-### Step 7: Execute Commits
-
-Once user approves the grouping:
+Proceed directly to commit execution without user validation:
 
 1. **For each group in order:**
    - Stage the files in that group: `git add <file1> <file2> ...`
-   - Commit with the message: `git commit -m "<type>(<scope>): <description>"`
+   - Commit with the generated message: `git commit -m "<type>(<scope>): <description>"`
    - Verify the commit was successful
 
 2. **Handle errors:**
-   - If a commit fails, stop and inform the user
-   - Show the error message
-   - Ask if they want to retry or investigate
+   - If a commit fails, stop and inform the user with the error message
 
-3. **Final summary:**
+3. **Skip empty groups:**
+   - If a group has no files after filtering, skip it silently
+
+4. **Final summary:**
    - Display all commits created
    - Show the final git log
-   - Confirm with user: "All commits created successfully. Here's what was committed:"
 
-### Step 8: Handle Edge Cases
+### Step 4: Handle Edge Cases
 
 **Case 1: No changes**
-- Inform user: "No changes found. Please make changes first."
+- Inform user: "No changes found."
 - Exit skill
 
 **Case 2: Only one file changed**
-- Propose a single commit with appropriate type and scope
-- Ask user to confirm the commit message
-- Execute the commit
+- Create a single commit with appropriate type and scope
+- Execute the commit automatically
 
 **Case 3: Mixed staged and unstaged changes**
-- Ask user: "You have both staged and unstaged changes. Should we commit:"
-  - "Only staged changes"
-  - "All changes (staged + unstaged)"
-  - "Let me decide per file"
+- Commit all changes (staged + unstaged) automatically
 
 **Case 4: Merge conflicts or dirty working tree**
 - Check `git status` for merge conflicts
-- If conflicts exist: "You have merge conflicts. Please resolve them first."
+- If conflicts exist: "Merge conflicts detected. Please resolve them first." and exit
 - If working tree is dirty in a way that prevents commits, inform user
 
 **Case 5: No git repository**
 - Check if current directory is a git repo
-- If not: "This is not a git repository. Please navigate to a git repository first."
+- If not: "This is not a git repository. Please navigate to a git repository first." and exit
 
 **Case 6: Empty commit message**
-- If no changes in a group after filtering: skip that group
-- If user provides empty description: ask for a valid description
+- If no changes in a group after filtering: skip that group silently
 
 ## Commit Message Generation
 
@@ -293,32 +199,24 @@ When generating commit messages automatically:
 When user invokes the skill without arguments:
 
 ```
-"I'll help you create Conventional Commits from your changes. Let me analyze what you have."
+"Analyzing changes and creating commits..."
 ```
 
-Then discover and present the changes.
+Then discover changes and create commits automatically.
 
 ### With Argument
 
 When user provides an argument like "fix login bug":
 
 ```
-"I'll help you create commits for the 'fix login bug' changes. Let me analyze your current changes."
+"Analyzing changes for 'fix login bug' and creating commits..."
 ```
 
 Use the argument as a prefix/hint for commit messages.
 
-### Asking for Confirmation
+### No Confirmation Needed
 
-Always ask for confirmation before executing commits:
-
-```
-"I will create the following commits:
-1. feat(api): add user authentication
-2. docs: update API documentation
-
-Shall I proceed? (yes/no)"
-```
+Commits are created automatically without user confirmation.
 
 ## Implementation Guidelines
 
@@ -400,12 +298,12 @@ Use the `group-changes.sh` script to automate this analysis.
    - `src/api/user.ts`: new file, source code → `feat(api)`
    - `src/utils/validation.ts`: modified, has "fix" in diff → `fix(validation)`
    - `README.md`: modified → `docs`
-4. Create proposed groups:
+4. Create groups:
    - Group 1: `feat(api): add user management` - [user.ts]
    - Group 2: `fix(validation): correct email validation` - [validation.ts]
    - Group 3: `docs: update API documentation` - [README.md]
-5. Present to user and ask for confirmation
-6. Execute commits in order
+5. Execute commits in order automatically
+6. Provide summary of created commits
 
 ## Finish
 
@@ -413,11 +311,10 @@ When commits are successfully created:
 
 1. Display summary of all commits created
 2. Show the git log with the new commits
-3. Inform user: "All commits created successfully following Conventional Commits standard."
-4. Suggest next steps:
-   - "Would you like to push these commits?"
-   - "Would you like to review the commits before pushing?"
+3. Inform user: "Commits created successfully following Conventional Commits standard."
+4. Provide summary of created commits
 
-If user cancels or errors occur:
-- Inform user of the state
+If errors occur:
+- Inform user of the error
+- Show which commits were created before the error
 - Suggest how to recover or continue
