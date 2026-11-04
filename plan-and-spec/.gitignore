@@ -1,0 +1,13 @@
+# This .gitignore is for the skill directory itself
+# The actual scratchpad files (*.ai-scratchpad.md) should be gitignored at the repo root
+
+# Ignore any temporary files created during skill development
+*.tmp
+*.bak
+*.swp
+
+# Ignore node_modules if this becomes a npm package
+node_modules/
+
+# Ignore any local test files
+test-output/
