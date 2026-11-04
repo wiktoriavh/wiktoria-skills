@@ -17,6 +17,10 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MISTRAL_SKILLS="$HOME/.agents/skills"
 CLAUDE_SKILLS="$HOME/.claude/code/skills"
 
+# ANSI color codes for dimmed text
+DIM='\e[2m'
+RESET='\e[0m'
+
 # Default to both platforms
 INSTALL_MISTRAL=true
 INSTALL_CLAUDE=true
@@ -63,8 +67,8 @@ elif [[ -z "${1:-}" ]]; then
     # Interactive mode - ask user
     echo "Where would you like to install the skills?"
     echo ""
-    echo "  1) Mistral Vibe only (~/.agents/skills)"
-    echo "  2) Claude Code only (~/.claude/code/skills)"
+    echo "  1) Agents directory ($HOME/.agents/skills) ${DIM}- Used by: Mistral Vibe${RESET}"
+    echo "  2) Claude directory ($HOME/.claude/code/skills) ${DIM}- Used by: Claude Code${RESET}"
     echo "  3) Both platforms (default)"
     echo "  4) Custom path"
     echo ""
