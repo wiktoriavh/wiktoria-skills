@@ -23,7 +23,6 @@ RESET='\e[0m'
 BOLD='\e[1m'
 GREEN='\e[32m'
 CYAN='\e[36m'
-SELECTED_BG='\e[7;30m'
 SELECTED_FG='\e[1;7m'
 
 # Default to both platforms
@@ -71,35 +70,53 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Save current terminal settings
+SAVED_STTY=$(stty -g 2>/dev/null)
+
+# Cleanup function to restore terminal
+cleanup_terminal() {
+    if [[ -n "$SAVED_STTY" ]]; then
+        stty "$SAVED_STTY" 2>/dev/null
+    fi
+    echo ""
+}
+
+trap cleanup_terminal EXIT INT TERM
+
 # Interactive arrow-key menu function
 show_menu() {
     local selected=0
     local options=("${MENU_OPTIONS[@]}")
     local title="Where would you like to install the skills?"
     
-    # Save current cursor position
-    echo -ne "\e[s"
+    # Set terminal to cbreak mode for single-character reading
+    if [[ -t 0 ]]; then
+        stty cbreak -echo 2>/dev/null
+    fi
     
     while true; do
-        # Clear menu area (move up and overwrite)
-        echo -ne "\e[2J\e[H"  # Clear screen and move to home
+        # Clear screen and move to home
+        echo -ne "\e[2J\e[H"
         echo "$title"
         echo ""
         
         # Draw menu options
         for i in "${!options[@]}"; do
             if [ $i -eq $selected ]; then
-                echo -e "  ${SELECTED_FG}> ${options[i]} ${RESET}<${RESET}"
+                echo -e "  ${SELECTED_FG}> ${options[i]} <${RESET}"
             else
                 echo -e "    ${options[i]}"
             fi
         done
         
         echo ""
-        echo -e "${DIM}Use arrow keys to navigate, Enter to select, ESC to default${RESET}"
+        echo -e "${DIM}Use arrow keys to navigate, Enter to select, ESC to default, q to quit${RESET}"
         
         # Read a single character (no newline)
-        read -rsn1 key
+        if ! IFS= read -rsn1 key; then
+            # Read error, break and use default
+            break
+        fi
         
         # Handle escape sequences (arrow keys start with ESC)
         if [[ "$key" == $'\e' ]]; then
@@ -118,10 +135,11 @@ show_menu() {
                 "[C") # Right arrow - same as Enter
                     break
                     ;;
+                "[D") # Left arrow - same as ESC
+                    selected=2
+                    break
+                    ;;
             esac
-        elif [[ "$key" == "" ]]; then
-            # Timeout or error, continue
-            continue
         else
             case "$key" in
                 $'\n') # Enter
@@ -134,9 +152,13 @@ show_menu() {
                     selected=2  # Default to "Both platforms"
                     break
                     ;;
-                "q"|"Q")
-                    echo ""
-                    exit 0
+                " "|"q"|"Q")
+                    if [[ "$key" == " " ]]; then
+                        break
+                    else
+                        echo ""
+                        exit 0
+                    fi
                     ;;
                 [1-4])
                     selected=$((key - 1))
@@ -146,8 +168,14 @@ show_menu() {
         fi
     done
     
-    # Move cursor down to clear the menu
-    echo -ne "\e[999B"
+    # Restore terminal settings
+    if [[ -n "$SAVED_STTY" ]]; then
+        stty "$SAVED_STTY" 2>/dev/null
+    fi
+    
+    # Clear the menu and return to normal output
+    echo -ne "\e[2J\e[H"
+    
     return $selected
 }
 
