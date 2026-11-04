@@ -17,13 +17,26 @@ REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MISTRAL_SKILLS="$HOME/.agents/skills"
 CLAUDE_SKILLS="$HOME/.claude/code/skills"
 
-# ANSI color codes for dimmed text
+# ANSI color codes
 DIM='\e[2m'
 RESET='\e[0m'
+BOLD='\e[1m'
+GREEN='\e[32m'
+CYAN='\e[36m'
+SELECTED_BG='\e[7;30m'
+SELECTED_FG='\e[1;7m'
 
 # Default to both platforms
 INSTALL_MISTRAL=true
 INSTALL_CLAUDE=true
+
+# Array of menu options
+MENU_OPTIONS=(
+    "Agents directory ($HOME/.agents/skills) ${DIM}- Used by: Mistral Vibe${RESET}"
+    "Claude directory ($HOME/.claude/code/skills) ${DIM}- Used by: Claude Code${RESET}"
+    "Both platforms (default)"
+    "Custom path"
+)
 
 echo "Skills Repository: $REPO_DIR"
 echo ""
@@ -58,36 +71,110 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Interactive arrow-key menu function
+show_menu() {
+    local selected=0
+    local options=("${MENU_OPTIONS[@]}")
+    local title="Where would you like to install the skills?"
+    
+    # Save current cursor position
+    echo -ne "\e[s"
+    
+    while true; do
+        # Clear menu area (move up and overwrite)
+        echo -ne "\e[2J\e[H"  # Clear screen and move to home
+        echo "$title"
+        echo ""
+        
+        # Draw menu options
+        for i in "${!options[@]}"; do
+            if [ $i -eq $selected ]; then
+                echo -e "  ${SELECTED_FG}> ${options[i]} ${RESET}<${RESET}"
+            else
+                echo -e "    ${options[i]}"
+            fi
+        done
+        
+        echo ""
+        echo -e "${DIM}Use arrow keys to navigate, Enter to select, ESC to default${RESET}"
+        
+        # Read a single character (no newline)
+        read -rsn1 key
+        
+        # Handle escape sequences (arrow keys start with ESC)
+        if [[ "$key" == $'\e' ]]; then
+            read -rsn2 -t 0.1 key2
+            case "$key2" in
+                "[A") # Up arrow
+                    if [ $selected -gt 0 ]; then
+                        selected=$((selected - 1))
+                    fi
+                    ;;
+                "[B") # Down arrow
+                    if [ $selected -lt $(( ${#options[@]} - 1 )) ]; then
+                        selected=$((selected + 1))
+                    fi
+                    ;;
+                "[C") # Right arrow - same as Enter
+                    break
+                    ;;
+            esac
+        elif [[ "$key" == "" ]]; then
+            # Timeout or error, continue
+            continue
+        else
+            case "$key" in
+                $'\n') # Enter
+                    break
+                    ;;
+                $'\r') # Enter (carriage return)
+                    break
+                    ;;
+                $'\x1b') # ESC key
+                    selected=2  # Default to "Both platforms"
+                    break
+                    ;;
+                "q"|"Q")
+                    echo ""
+                    exit 0
+                    ;;
+                [1-4])
+                    selected=$((key - 1))
+                    break
+                    ;;
+            esac
+        fi
+    done
+    
+    # Move cursor down to clear the menu
+    echo -ne "\e[999B"
+    return $selected
+}
+
 # If no target specified and not in a TTY (non-interactive), default to both
 if [[ -z "$1" && ! -t 0 && ! -t 1 ]]; then
     # Non-interactive mode with no args - use both
     INSTALL_MISTRAL=true
     INSTALL_CLAUDE=true
 elif [[ -z "${1:-}" ]]; then
-    # Interactive mode - ask user
-    echo "Where would you like to install the skills?"
-    echo ""
-    echo -e "  1) Agents directory ($HOME/.agents/skills) ${DIM}- Used by: Mistral Vibe${RESET}"
-    echo -e "  2) Claude directory ($HOME/.claude/code/skills) ${DIM}- Used by: Claude Code${RESET}"
-    echo "  3) Both platforms (default)"
-    echo "  4) Custom path"
-    echo ""
-    read -p "Select option [1-4, default=3]: " choice
+    # Interactive mode with arrow keys
+    show_menu
+    choice=$?
     
     case "$choice" in
-        1)
+        0)
             INSTALL_MISTRAL=true
             INSTALL_CLAUDE=false
             ;;
-        2)
+        1)
             INSTALL_MISTRAL=false
             INSTALL_CLAUDE=true
             ;;
-        3|""|3.0)
+        2)
             INSTALL_MISTRAL=true
             INSTALL_CLAUDE=true
             ;;
-        4)
+        3)
             read -p "Enter custom path for Mistral skills (leave empty to skip): " custom_mistral
             if [[ -n "$custom_mistral" ]]; then
                 MISTRAL_SKILLS="$custom_mistral"
