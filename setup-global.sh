@@ -15,7 +15,7 @@
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MISTRAL_SKILLS="$HOME/.agents/skills"
-CLAUDE_SKILLS="$HOME/.claude/code/skills"
+CLAUDE_SKILLS="$HOME/.claude/skills"
 
 # ANSI color codes
 DIM='\e[2m'
@@ -32,7 +32,7 @@ INSTALL_CLAUDE=true
 # Array of menu options
 MENU_OPTIONS=(
     "Agents directory ($HOME/.agents/skills) ${DIM}- Used by: Mistral Vibe${RESET}"
-    "Claude directory ($HOME/.claude/code/skills) ${DIM}- Used by: Claude Code${RESET}"
+    "Claude directory ($HOME/.claude/skills) ${DIM}- Used by: Claude Code${RESET}"
     "Both platforms (default)"
     "Custom path"
 )
